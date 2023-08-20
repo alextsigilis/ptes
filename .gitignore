@@ -1,2 +1,5 @@
 physionet.org/*
 key.txt
+*.pickle
+__pycache__/*
+cache/*
