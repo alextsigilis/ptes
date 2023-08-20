@@ -6,6 +6,7 @@ import pyedflib
 import pandas as pd
 import jax.numpy as jnp
 import numpy as np
+from collections import defaultdict
 from scipy.ndimage import zoom
 from dataloader import load_patient
 from hosa import *
@@ -20,10 +21,10 @@ from hosa import *
 datadir = "/data/thmmy/Year_4/Semester_8/PTES/Project/dataset/recordings"
 
 # where to save the estimations
-savedir = "./cache/bic"
+savedir = "./cache"
 
 # How many Segments to use for the estimations
-nseg = 32
+nseg = 16
 
 # The sampling frequncy
 fs = 256
@@ -31,8 +32,8 @@ fs = 256
 # The duration of each epoch
 dt = 30
 
-# Frequencies to keep
-kl, ku = 150, 250
+# Define for which patients to estimate the bicoherency
+start, stop = 0, 70
 
 # ===================================================================================== #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
@@ -45,11 +46,9 @@ pattern = re.compile("SN[0-9]{3}\.edf")
 patients = [file[:5] for file in os.listdir(datadir) if pattern.match(file)]
 
 
-# Create save dir
-os.mkdir(savedir)
-
 # Estimating the Bicoherence for every patient
-for patient in patients:
+for pid, patient in enumerate(patients[start:stop]):
+
 
     print(f"Loading patient {patient}...", end="")
 
@@ -89,21 +88,22 @@ for patient in patients:
     print(f"Estimating Bicoherence for patients {patient}...")
 
     # Create empty dictionary to store the results
-    estimations = {ch: [] for ch in channels}
+    estimations = defaultdict(list)
     estimations['stage'] = stages
 
     # For every epoch estimate Bicohernce
     for i,x in enumerate(epochs):
         print(f"\t Epoch {i+1}/{nepochs}", end="\r")
-        b = np.array(bicoher(x))
+        b = np.array(bicoher(x)).astype(np.float16)
         _, M, M = b.shape
         for j, ch in enumerate(channels):
             estimations[ch].append(b[j,:,:])
 
     print("\nDone!")
-    print(f"Saving to file {patient}.pickle...", end="")
 
-    df = pd.DataFrame(estimations)
-    with open(os.path.join(savedir, f"{patient}.pickle"), "wb") as file:
-        pickle.dump(df, file)
-    print("Done!", end="\n\n")
+    print(f"Saving to file {patient}.pickle...", end="")
+    pd.DataFrame(estimations).to_pickle(f"{savedir}/bic_{patient}.pickle")
+    print("Done!")
+
+print("\t Goodbye")
+
