@@ -18,7 +18,7 @@ from hosa import *
 # ===================================================================================== #
 
 # Path to edf reocrdings
-datadir = "/data/thmmy/Year_4/Semester_8/PTES/Project/dataset/recordings"
+datadir = "./physionet.org/files/hmc-sleep-staging/1.0.0/recordings"
 
 # where to save the estimations
 savedir = "./cache"
@@ -44,11 +44,10 @@ pattern = re.compile("SN[0-9]{3}\.edf")
 
 # Get all patients in `datadir`
 patients = [file[:5] for file in os.listdir(datadir) if pattern.match(file)]
-
+patients = sorted(patients)
 
 # Estimating the Bicoherence for every patient
 for pid, patient in enumerate(patients[start:stop]):
-
 
     print(f"Loading patient {patient}...", end="")
 
@@ -94,7 +93,7 @@ for pid, patient in enumerate(patients[start:stop]):
     # For every epoch estimate Bicohernce
     for i,x in enumerate(epochs):
         print(f"\t Epoch {i+1}/{nepochs}", end="\r")
-        b = np.array(bicoher(x)).astype(np.float16)
+        b = np.array(bicoher(x)).astype(np.float32)
         _, M, M = b.shape
         for j, ch in enumerate(channels):
             estimations[ch].append(b[j,:,:])
