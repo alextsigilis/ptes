@@ -1,0 +1,82 @@
+%
+% createImgDataset.m
+%
+%
+%% Reset Workspace
+clear; clc;
+
+%% Define BIC parameters
+K = 32;
+fs = 256;
+fc = 64;
+method = 'fast';
+channel = 1;
+
+%% Define Directories
+datadir = uigetdir("");
+savedir = uigetdir("");
+cd(datadir);
+
+
+%% Define empty table
+
+% Check if csv exists
+dsfile = fullfile(savedir, "dataset.csv");
+if isfile(dsfile)
+    fprintf("csv found!\n'\n");
+    dataset = readtable(dsfile);
+else
+    fprintf("csv NOT FOUND. Creating table.\n\n");
+    sz = [0 4];
+    names = ["idx", "channel", "path", "annotation"];
+    types = ["int16", "int16", "string", "categorical"];
+    dataset = table('Size', [0 4], ...
+        'VariableNames', names, ...
+        'VariableTypes', types);
+end
+
+
+%% Iterate on the dataset
+
+for pid = 1 : 154
+    
+    % Autosave every 10 patients
+    if mod(pid, 10) == 0
+        fprintf("\t\tautosaving...");
+        writetable(dataset, dsfile);
+        fprintf("Done!\n");
+    end
+
+    fprintf("Loading data for patient SN%03d...", pid);
+    data = loadEDF(pid);
+    fprintf("Done.\n");
+
+    fprintf("\tCalculating BIC for channel %d...", channel);
+    bic = bicEEG(data, K, fs, fc, channel, method);
+    fprintf("Done\n");
+           
+    fprintf("\tSaving images...");
+
+    for i = 1 : size(bic,1)
+        idx = size(dataset, 1) + 1;
+            path = fullfile(savedir, sprintf("%d.png", idx));
+            annotation = categorical(bic{i,2});
+            b = cell2mat(bic{i,1});
+            Mb = max(b, [], "all");
+            mb = min(b, [], "all");
+            b = (b-mb) / (Mb - mb);
+
+            t = table([idx], [channel], [path], [annotation], 'VariableNames',names);
+            dataset = [dataset; t];
+
+            imwrite(b,path);
+
+        end
+
+        fprintf("Done.\n")
+
+    end
+    
+    fprintf("========================================================================= \n");
+
+end

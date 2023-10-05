@@ -1,0 +1,22 @@
+%
+%   makeHist.m
+%
+% Make histograms of all features.
+%
+clear; clc;
+close all;
+%% Load Features
+F = readtable("features.csv");
+
+%% Number of features and stages
+stages = [
+    "Sleep stage N1",
+    "Sleep stage N2",
+    "Sleep stage N3",
+    "Sleep stage R",
+    "Sleep stage W",
+    ];
+
+features = 2:11;
+
+%% Draw the histogra
