@@ -61,6 +61,9 @@ sleepstages = {"Sleep stage W";
 %first patient
 p1 = 1 ;
 
+%last patient
+p2=119 ;
+
 %number of patients
 a=0;                %a=0 for using the whole set of patient's data
 
@@ -100,13 +103,14 @@ mkdir(                                                  ...
 
 
 
-
+firstchannel=6;
+lastchannel=6;
 
 % =============================================================
 %                      Cepstrum Calculation 
 % -------------------------------------------------------------
 
-for k=6:6%1:numel(channel)
+for k=firstchannel:lastchannel%1:numel(channel)
     
     
   for j = 1:5 
@@ -148,10 +152,10 @@ for k=6:6%1:numel(channel)
         [RC,CC1,CC2 , Hm , H] = avg_cepstrum1(S, channel{k} , sleepstages{j} ,dt);
         
         %storing cepstral coefficients and impulse response estimations
-        cepstrum_coeff(5*(118+1)*(k-1)+(i-p1)*5+j,:) = {RC CC1 CC2 H Hm i channel{k} sleepstages{j}};
+        cepstrum_coeff(5*(p2-p1+1)*(k-1)+(i-p1)*5+j,:) = {RC CC1 CC2 H Hm i channel{k} sleepstages{j}};
         
         %computing cepstrum statistics
-        cepstrum_statistics(5*(118+1)*(k-1)+(i-p1)*5+j,:) = {std(CC1) skewness(CC1) kurtosis(CC1)  abs(mean(CC1 .* log2(CC1),'omitnan')) i channel{k} sleepstages{j}};
+        cepstrum_statistics(5*(p2-p1+1)*(k-1)+(i-p1)*5+j,:) = {std(CC1) skewness(CC1) kurtosis(CC1)  abs(mean(CC1 .* log2(CC1),'omitnan')) i channel{k} sleepstages{j}};
         
         real_cepstrum = real_cepstrum + RC ;
         
@@ -189,6 +193,8 @@ for k=6:6%1:numel(channel)
     
    complex_cepstrum1 = fftshift(complex_cepstrum1);
    
+   ih = fftshift(icceps(complex_cepstrum1)) ;
+   
    
    
    
@@ -196,22 +202,25 @@ for k=6:6%1:numel(channel)
    
     figure(5*(k-1)+j)
     clf;
-    subplot(5,1,1)
+    subplot(6,1,1)
     plot((-M/2:(M/2-1))*(1/fs) , real_cepstrum(1:round(M)) , 'r'); title(sprintf('Average Real Cepstrum of channel "%s" for the %s ', channel{k} , sleepstages{j})); xlabel('Time(s)'); ylabel('Real Cepstrum');
 
 
-    subplot(5,1,2)
+    subplot(6,1,2)
     plot((-M/2:(M/2-1))*(1/fs) , complex_cepstrum1 , 'r'); title(sprintf('Average Complex Cepstrum of channel "%s" for the %s ', channel{k} , sleepstages{j})); xlabel('Time(s)'); ylabel('Complex Cepstrum');
      
-    subplot(5,1,3)
+    subplot(6,1,3)
     plot(t(1:round(M/2)) , hm(1:round(M/2)) , 'r'); title(sprintf('Minimum phase impulse response of channel "%s" for the %s ', channel{k} , sleepstages{j})); xlabel('Time(s)'); ylabel('Minimum phase impulse response');
     
     
-    subplot(5,1,4)
+    subplot(6,1,4)
     plot(-nfft/2:nfft/2-1, complex_cepstrum2),title(sprintf(' Complex Cepstrum (FFT method) of channel "%s" for the %s ', channel{k} , sleepstages{j})); xlabel('samples'); ylabel('Cepstrum'); grid on
 
-    subplot(5,1,5)
+    subplot(6,1,5)
     plot(-nfft/2:nfft/2-1, h),title(sprintf(' Impulse response of channel "%s" for the %s ', channel{k} , sleepstages{j})); xlabel('samples'); ylabel('Impulse response'); grid on
+    
+    subplot(6,1,6)
+    plot((-M/2:(M/2-1))*(1/fs) , ih , 'b'); title(sprintf('Mixed-phase impulse response of channel "%s" for the %s ', channel{k} , sleepstages{j})); xlabel('Time(s)'); ylabel('Minimum phase impulse response');
     
     filename = sprintf("%s\\Cepstrum_graphs\\%d.png",dir, 5*(k-1)+2*j);
     saveas(gcf, filename);
@@ -235,33 +244,34 @@ save(filename,"cepstrum_coeff")
 %Plotting a histogram of the variance of cepstral coefficients for each slape stage of
 %the selected channel
 
-for kk=1:8
+for kk=firstchannel:lastchannel
     
 figure(5*(k-1)+j+kk)
 clf
 
-    for jj=1:5
     
-        a1=[];
     
-        for i=[1:13,15:17,19:35,37:63,65:76,78:97,99:119]
-            
-            st = double(table2array(cepstrum_statistics(5*(118+1)*(kk-1)+(i-p1)*5+jj,1)));
-            
-            if st ~= 0
-    
-            a1=[a1; st];
-            
-            end
         
-        end
-    
-        edges = linspace(0, 15 ,round(sqrt(numel(a1))));
-    
-        hold on;
-        histogram(a1,edges);
+        
+         a1 = cepstrum_statistics.var(cepstrum_statistics.Annotations == 'Sleep stage W' & cepstrum_statistics.channel == channel{kk});
+          a2 = cepstrum_statistics.var(cepstrum_statistics.Annotations == 'Sleep stage R' & cepstrum_statistics.channel == channel{kk});
+          a3 = cepstrum_statistics.var(cepstrum_statistics.Annotations == 'Sleep stage N1' & cepstrum_statistics.channel == channel{kk});
+          a4 = cepstrum_statistics.var(cepstrum_statistics.Annotations == 'Sleep stage N2' & cepstrum_statistics.channel == channel{kk});
+          a5 = cepstrum_statistics.var(cepstrum_statistics.Annotations == 'Sleep stage N3' & cepstrum_statistics.channel == channel{kk});
+          %edges = linspace(0, 15 ,round(sqrt(numel(a1))));
+          hold on;
+          histogram(a1);
+          histogram(a2);
+          histogram(a3);
+          histogram(a4);
+          histogram(a5);
 
-    end
+        
+    
+%         hold on;
+%         histogram(a1,edges);
+
+    
 
 
 legend(["W", "N1", "N2", "N3", "R"]);
@@ -281,33 +291,44 @@ end
 %Plotting a histogram of the skewness of cepstral coefficients for each slape stage of
 %the selected channel
 
-for kk=1:8
+for kk=firstchannel:lastchannel
     
 figure(5*(k-1)+j+kk+8)
 clf
 
-    for jj=1:5
-    
-        a1=[];
-    
-        for i=[1:13,15:17,19:35,37:63,65:76,78:97,99:119]
-            
-            st = double(table2array(cepstrum_statistics(5*(118+1)*(kk-1)+(i-p1)*5+jj,2)));
-            
-            if st ~= 0
-    
-            a1=[a1; st];
-            
-            end
-        
-        end
-    
-        edges = linspace(0, 5 ,round(sqrt(numel(a1))));
-    
-        hold on;
-        histogram(a1,edges);
+%     for jj=1:5
+%     
+%         a1=[];
+%     
+%         for  i=[1:13,15:17,19:35,37:63,65:76,78:97,99:119]
+%             
+%             st = double(table2array(cepstrum_statistics(5*(p2-p1+1)*(kk-1)+(i-p1)*5+jj,2)));
+%             
+%             if st ~= 0
+%     
+%             a1=[a1; st];
+%             
+%             end
+%         
+%         end
+          a1 = cepstrum_statistics.skw(cepstrum_statistics.Annotations == 'Sleep stage W' & cepstrum_statistics.channel == channel{kk});
+          a2 = cepstrum_statistics.skw(cepstrum_statistics.Annotations == 'Sleep stage R' & cepstrum_statistics.channel == channel{kk});
+          a3 = cepstrum_statistics.skw(cepstrum_statistics.Annotations == 'Sleep stage N1' & cepstrum_statistics.channel == channel{kk});
+          a4 = cepstrum_statistics.skw(cepstrum_statistics.Annotations == 'Sleep stage N2' & cepstrum_statistics.channel == channel{kk});
+          a5 = cepstrum_statistics.skw(cepstrum_statistics.Annotations == 'Sleep stage N3' & cepstrum_statistics.channel == channel{kk});
+          %edges = linspace(0, 15 ,round(sqrt(numel(a1))));
+          hold on;
+          histogram(a1);
+          histogram(a2);
+          histogram(a3);
+          histogram(a4);
+          histogram(a5);
+%         edges = linspace(0, 5 ,round(sqrt(numel(a1))));
+%     
+%         hold on;
+%         histogram(a1,edges);
 
-    end
+%     end
 
 
 legend(["W", "N1", "N2", "N3", "R"]);
@@ -328,33 +349,45 @@ end
 %the selected channel
 
 
-for kk=1:8
+for kk=firstchannel:lastchannel
     
 figure(5*(k-1)+j+kk+16)
 clf
 
-    for jj=1:5
+%     for jj=1:5
+%     
+%         a1=[];
+%     
+%         for i=[1:13,15:17,19:35,37:63,65:76,78:97,99:119]
+%             
+%             st = double(table2array(cepstrum_statistics(5*(p2-p1+1)*(kk-1)+(i-p1)*5+jj,3)));
+%             
+%             if st ~= 0
+%     
+%             a1=[a1; st];
+%             
+%             end
+%         
+%         end
     
-        a1=[];
-    
-        for i=[1:13,15:17,19:35,37:63,65:76,78:97,99:119]
-            
-            st = double(table2array(cepstrum_statistics(5*(118+1)*(kk-1)+(i-p1)*5+jj,3)));
-            
-            if st ~= 0
-    
-            a1=[a1; st];
-            
-            end
-        
-        end
-    
-        edges = linspace(0, 4000 ,round(sqrt(numel(a1))));
-    
-        hold on;
-        histogram(a1,edges);
+%         edges = linspace(0, 4000 ,round(sqrt(numel(a1))));
+%     
+%         hold on;
+%         histogram(a1,edges);
 
-    end
+%     end
+          a1 = cepstrum_statistics.krt(cepstrum_statistics.Annotations == 'Sleep stage W' & cepstrum_statistics.channel == channel{kk});
+          a2 = cepstrum_statistics.krt(cepstrum_statistics.Annotations == 'Sleep stage R' & cepstrum_statistics.channel == channel{kk});
+          a3 = cepstrum_statistics.krt(cepstrum_statistics.Annotations == 'Sleep stage N1' & cepstrum_statistics.channel == channel{kk});
+          a4 = cepstrum_statistics.krt(cepstrum_statistics.Annotations == 'Sleep stage N2' & cepstrum_statistics.channel == channel{kk});
+          a5 = cepstrum_statistics.krt(cepstrum_statistics.Annotations == 'Sleep stage N3' & cepstrum_statistics.channel == channel{kk});
+          %edges = linspace(0, 15 ,round(sqrt(numel(a1))));
+          hold on;
+          histogram(a1);
+          histogram(a2);
+          histogram(a3);
+          histogram(a4);
+          histogram(a5);
 
 
 legend(["W", "N1", "N2", "N3", "R"]);
@@ -374,34 +407,45 @@ end
 %Plotting a histogram of the entropia of cepstral coefficients for each slape stage of
 %the selected channel
 
-for kk=1:8
+for kk=firstchannel:lastchannel
     
 figure(5*(k-1)+j+kk+24)
 clf
 
-    for jj=1:5
+%     for jj=1:5
+%     
+%         a1=[];
+%     
+%         for i=[1:13,15:17,19:35,37:63,65:76,78:97,99:119]
+%             
+%             st = double(table2array(cepstrum_statistics(5*(p2-p1+1)*(kk-1)+(i-p1)*5+jj,4)));
+%             
+%             if  st ~= 0
+%     
+%             a1=[a1; st];
+%             
+%             end
+%         
+%         end
     
-        a1=[];
-    
-        for i=[1:13,15:17,19:35,37:63,65:76,78:97,99:119]
-            
-            st = double(table2array(cepstrum_statistics(5*(118+1)*(kk-1)+(i-p1)*5+jj,4)));
-            
-            if  st ~= 0
-    
-            a1=[a1; st];
-            
-            end
-        
-        end
-    
-        edges = linspace(0, 1 ,round(sqrt(numel(a1))));
-    
-        hold on;
-        histogram(a1,edges);
+%         edges = linspace(0, 1 ,round(sqrt(numel(a1))));
+%     
+%         hold on;
+%         histogram(a1,edges);
 
-    end
-
+%     end
+          a1 = cepstrum_statistics.entropia(cepstrum_statistics.Annotations == 'Sleep stage W' & cepstrum_statistics.channel == channel{kk});
+          a2 = cepstrum_statistics.entropia(cepstrum_statistics.Annotations == 'Sleep stage R' & cepstrum_statistics.channel == channel{kk});
+          a3 = cepstrum_statistics.entropia(cepstrum_statistics.Annotations == 'Sleep stage N1' & cepstrum_statistics.channel == channel{kk});
+          a4 = cepstrum_statistics.entropia(cepstrum_statistics.Annotations == 'Sleep stage N2' & cepstrum_statistics.channel == channel{kk});
+          a5 = cepstrum_statistics.entropia(cepstrum_statistics.Annotations == 'Sleep stage N3' & cepstrum_statistics.channel == channel{kk});
+          %edges = linspace(0, 15 ,round(sqrt(numel(a1))));
+          hold on;
+          histogram(a1);
+          histogram(a2);
+          histogram(a3);
+          histogram(a4);
+          histogram(a5);
 
 legend(["W", "N1", "N2", "N3", "R"]);
 xlabel("Entropia of Cepstrum")
