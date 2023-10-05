@@ -17,21 +17,23 @@
 %Function Arguments:
 %
 %==========================================================================
-%Z :
-%channel:
-%sleep stage:
-%dt:
+%Z : the data table of a patient which contains the polysomnographic
+%recordings
+%channel:the selected channel(EEG_F4_M1 , EEG_C4_M1 , EEG_O2_M1 , EEG_C3_M2 , EMG_chin , EOG_E1_M2 , EOG_E2_M2 , ECG)
+%sleep stage: the selected sleep stage()
+%dt: dt (in seconds) is an integer < 30 seconds  
+%--------------------------------------------------------------------------
 
 %--------------------------------------------------------------------------
 %
 %Return Products:
 %
 %==========================================================================
-%RC:
-%CC1:
-%CC2:
-%Hm:
-%H:
+%ar:the computed coefficients from the ar part
+%ma:the computed coefficients from the ma part
+%p:the order of the ar part
+%q:the order of the ma part
+
 
 
 
