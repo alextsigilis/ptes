@@ -4,3 +4,6 @@ key.txt
 __pycache__/*
 cache/*
 bin
+*.asv
+.DS_Store
+.ipynb_checkpoints/

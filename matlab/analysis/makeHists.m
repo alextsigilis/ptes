@@ -6,7 +6,7 @@
 clear; clc;
 close all;
 %% Load Features
-F = readtable("bicepstrum_f.csv");
+F = readtable(fullfile(fileparts(mfilename("fullpath")), "..", "..", "data", "bicepstrum_f.csv"));
 
 %% Number of features and stages
 stages = [

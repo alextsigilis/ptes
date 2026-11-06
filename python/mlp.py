@@ -5,6 +5,7 @@ Created on Sat Sep 30 09:34:09 2023
 @author: sted
 """
 
+import os
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split, KFold
@@ -15,7 +16,7 @@ from sklearn.decomposition import PCA
  
 
 # Data Loading
-data = pd.read_csv('features.csv');
+data = pd.read_csv(os.path.join(os.path.dirname(__file__), '..', 'data', 'features.csv'))
 data = data.dropna()
 
 

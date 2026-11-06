@@ -40,7 +40,7 @@ start, stop = 0, 70
 # ===================================================================================== #
 
 # Regex for finding the patient files
-pattern = re.compile("SN[0-9]{3}\.edf")
+pattern = re.compile(r"SN[0-9]{3}\.edf")
 
 # Get all patients in `datadir`
 patients = [file[:5] for file in os.listdir(datadir) if pattern.match(file)]

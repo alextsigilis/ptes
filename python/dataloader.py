@@ -6,7 +6,7 @@ import re
 def load_patient(edf, scores, dt=30, fs=256):
     signals, headers, _ = pyedflib.highlevel.read_edf(edf)
     channels = [header['label'] for header in headers]
-    scores = pd.read_csv("/data/thmmy/Year_4/Semester_8/PTES/Project/dataset/recordings/SN001_sleepscoring.txt")
+    scores = pd.read_csv(scores)
     idx = scores[' Annotation'].apply(
         lambda s: re.fullmatch("Sleep.*", s.strip()) is not None
     )
